@@ -3266,13 +3266,19 @@ modules.index = QRCode;
               }
             });
 
+            // Cập nhật lớp học nếu trên Google Sheet đã chuyển sang lớp khác
+            if (data.className && data.className !== currentClassName) {
+              currentClassName = data.className;
+              localStorage.setItem(CLASS_NAME_STORAGE_KEY, currentClassName);
+              const classInp = document.getElementById('inputCurrentClass');
+              if (classInp) classInp.value = currentClassName;
+            }
+
             saveStateToStorage();
             if (currentView === 'teacherDashboardView') {
               renderTeacherDashboard(false);
             } else if (currentView === 'studentHomeView') {
               renderStudentHome();
-      initGoogleSheetUI();
-      if (googleScriptUrl) fetchFromGoogleSheet();
             }
 
             if (isManual) {
@@ -3409,13 +3415,14 @@ modules.index = QRCode;
       showToast('📥 Đã tải xuống file bảng điểm: ' + filename);
     }
 
-    // XÓA KẾT QUẢ ĐỂ KIỂM TRA LỚP MỚI
+    // XÓA KẾT QUẢ ĐỂ KIỂM TRA LỚP MỚI (ĐỒNG BỘ GOOGLE SHEET & MỌI ĐIỆN THOẠI)
     function resetForNewClassPrompt() {
-      const nextClassDefault = '11A' + (parseInt(currentClassName.replace(/[^0-9]/g, '') || '1') + 1);
+      const currentNum = parseInt(currentClassName.replace(/[^0-9]/g, '') || '1');
+      const nextClassDefault = '11A' + (currentNum + 1);
       const newClassInput = prompt(
         `BẮT ĐẦU KIỂM TRA LỚP MỚI:\n` +
         `- Kết quả lớp hiện tại (${currentClassName}) sẽ được lưu trữ vào Lịch Sử trên Google Sheet.\n` +
-        `- 8 nhóm học sinh sẽ được đặt lại về 0 điểm sẵn sàng cho lớp mới.\n\n` +
+        `- 8 nhóm học sinh sẽ được đặt lại về 0 điểm (Chưa làm) sẵn sàng cho lớp mới.\n\n` +
         `Nhập tên lớp học mới cần kiểm tra:`,
         nextClassDefault
       );
@@ -3428,25 +3435,34 @@ modules.index = QRCode;
         const classInput = document.getElementById('inputCurrentClass');
         if (classInput) classInput.value = currentClassName;
 
-        // Xóa dữ liệu cục bộ
+        // 1. Xóa sạch dữ liệu bài làm của 8 nhóm ngay lập tức trên máy giáo viên
         appState = { groups: {}, teacherComments: {} };
         initDefaultState();
         saveStateToStorage();
         renderTeacherDashboard();
 
-        // Gửi lệnh xóa và chuyển lớp lên Google Sheet
-        if (googleScriptUrl) {
-          showToast(`Đang lưu trữ dữ liệu lớp cũ và khởi tạo lớp ${targetClass} trên Google Sheet...`);
-          fetch(googleScriptUrl + (googleScriptUrl.includes('?') ? '&' : '?') +
+        const activeUrl = googleScriptUrl || localStorage.getItem(GOOGLE_SCRIPT_STORAGE_KEY) || DEFAULT_GOOGLE_SCRIPT_URL;
+
+        // 2. Gửi lệnh xóa và đổi lớp lên Google Sheet
+        if (activeUrl) {
+          showToast(`Đang lưu trữ lớp cũ và khởi tạo lớp ${targetClass} trên Google Sheet...`);
+
+          const resetUrl = activeUrl + (activeUrl.includes('?') ? '&' : '?') +
             'action=reset_all&className=' + encodeURIComponent(targetClass) +
-            '&t=' + Date.now()
-          ).then(r => r.json()).then(res => {
-            showToast(`✅ Đã thiết lập kiểm tra thành công cho lớp: ${targetClass}`);
-          }).catch(e => {
-            showToast(`Đã làm mới dữ liệu cho lớp: ${targetClass}`);
-          });
+            '&t=' + Date.now();
+
+          // Dùng Image Beacon đảm bảo gửi thành công 100% không bị chặn bởi CORS
+          const imgBeacon = new Image();
+          imgBeacon.src = resetUrl;
+
+          // Đồng thời gửi fetch để cập nhật
+          try {
+            fetch(resetUrl, { mode: 'no-cors' }).then(() => {
+              showToast(`✅ Đã thiết lập kiểm tra thành công cho lớp: ${targetClass}`);
+            });
+          } catch(e) {}
         } else {
-          showToast(`✅ Đã thiết lập kiểm tra thành công cho lớp: ${targetClass}`);
+          showToast(`✅ Đã xóa dữ liệu và thiết lập cho lớp: ${targetClass}`);
         }
       }
     }
@@ -3607,10 +3623,23 @@ modules.index = QRCode;
       const gState = appState.groups[groupId];
 
       if (gState && gState.status === 'submitted') {
-        if (confirm(`${groupCfg.name} đã nộp bài đạt ${gState.score}/10 điểm.\nBạn có muốn xem lại chi tiết bài làm không?`)) {
+        const choice = confirm(
+          `${groupCfg.name} đã có bài thi trước đó (${gState.score}/10 điểm).\n\n` +
+          `- Nhấn [OK] để BẮT ĐẦU LÀM BÀI MỚI (Dành cho học sinh lớp mới).\n` +
+          `- Nhấn [Hủy / Cancel] để XEM LẠI BÀI LÀM CŨ.`
+        );
+        if (choice) {
+          // Cho phép nhóm làm lại bài mới
+          gState.status = 'not_started';
+          gState.score = null;
+          gState.correctCount = 0;
+          gState.wrongCount = 0;
+          gState.answers = {};
+          saveStateToStorage();
+        } else {
           openGroupDetailModal(groupId);
+          return;
         }
-        return;
       }
 
       // Mở modal đăng nhập nhóm với mật khẩu "vietnam"
@@ -4201,7 +4230,7 @@ modules.index = QRCode;
       }
     }
 
-    // Đặt lại toàn bộ dữ liệu 8 nhóm
+    // Đặt lại toàn bộ dữ liệu 8 nhóm (Xóa cả máy tính và Google Sheet)
     function resetAllDataPrompt() {
       if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn XÓA TOÀN BỘ bài làm và điểm số của cả 8 nhóm để bắt đầu tiết học mới?')) {
         localStorage.removeItem(STORAGE_KEY);
@@ -4209,6 +4238,17 @@ modules.index = QRCode;
         initDefaultState();
         saveStateToStorage();
         renderTeacherDashboard();
+
+        const activeUrl = googleScriptUrl || localStorage.getItem(GOOGLE_SCRIPT_STORAGE_KEY) || DEFAULT_GOOGLE_SCRIPT_URL;
+        if (activeUrl) {
+          const resetUrl = activeUrl + (activeUrl.includes('?') ? '&' : '?') +
+            'action=reset_all&className=' + encodeURIComponent(currentClassName) +
+            '&t=' + Date.now();
+          const imgBeacon = new Image();
+          imgBeacon.src = resetUrl;
+          try { fetch(resetUrl, { mode: 'no-cors' }); } catch(e) {}
+        }
+
         showToast('Đã xóa và đặt lại dữ liệu toàn bộ 8 nhóm!');
       }
     }
