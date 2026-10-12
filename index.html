@@ -1257,6 +1257,52 @@
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+  
+    .class-selector-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eff6ff;
+      border: 1.5px solid #93c5fd;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e40af;
+    }
+    .class-input-field {
+      border: 1px solid #93c5fd;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e3a8a;
+      width: 75px;
+      text-align: center;
+      background: #ffffff;
+      outline: none;
+    }
+    .class-input-field:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    .btn-sheet-connect {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff !important;
+      border: none;
+    }
+    .btn-sheet-connect:hover {
+      background: linear-gradient(135deg, #047857, #065f46);
+    }
+    .btn-excel-export {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #ffffff !important;
+      border: none;
+    }
+    .btn-excel-export:hover {
+      background: linear-gradient(135deg, #0369a1, #075985);
+    }
+    
   </style>
 </head>
 <body>
@@ -1287,6 +1333,15 @@
       </div>
 
       <div class="header-right">
+        <button id="btnShowClassQR" class="btn-teacher-login" style="background: linear-gradient(135deg, #16a34a, #15803d);" onclick="window.openClassQRModal()">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <path d="M14 14h3v3h-3zM17 17h4v4h-4zM14 20h3v1h-3zM20 14h1v3h-1z"></path>
+          </svg>
+          Mã QR Lớp Học
+        </button>
         <button id="btnHeaderAction" class="btn-teacher-login" onclick="window.openTeacherLoginModal()">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -1432,6 +1487,13 @@
               ĐỒNG BỘ THỜI GIAN THỰC (REAL-TIME)
             </span>
             <span style="font-size:13px; color:var(--text-muted);" id="lastSyncTime">Cập nhật lúc: Vừa xong</span>
+            <div class="class-selector-box" title="Đang kiểm tra lớp này. Bạn có thể sửa tên lớp hoặc bấm Bắt đầu lớp mới">
+              <span>Lớp:</span>
+              <input type="text" id="inputCurrentClass" class="class-input-field" value="11A1" onchange="window.onClassChange(this.value)">
+            </div>
+            <span id="sheetStatusBadge" class="live-badge" style="background:#f1f5f9; color:#475569; border-color:#cbd5e1; cursor:pointer;" onclick="window.openGoogleSheetConfigModal()">
+              ⚪ Google Sheet: Chưa kết nối
+            </span>
           </div>
         </div>
 
@@ -1593,6 +1655,89 @@
     </div>
   </div>
 
+  
+  <!-- MODAL: MÃ QR CODE LỚP HỌC -->
+  <div class="modal-backdrop" id="classQRModal">
+    <div class="modal-box" style="max-width: 520px; text-align: center;">
+      <div class="modal-header" style="justify-content: center;">
+        <div class="modal-header-icon" style="background:#16a34a;">
+          QR
+        </div>
+        <div>
+          <h3 style="font-size: 20px; color: #0b3c60;">MÃ QR BÀI TẬP NHÓM</h3>
+          <p style="font-size: 13px; color: #64748b;">TRƯỜNG THPT QUANG TRUNG • MÔN GDQP&AN</p>
+        </div>
+      </div>
+
+      <div style="margin: 16px auto; display: inline-block; padding: 12px; background: white; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+        <img src="data:image/png;base64,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" alt="Mã QR Code https://subap209.github.io/quocphong/" style="width: 280px; height: 280px; display: block; border-radius: 8px;">
+      </div>
+
+      <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 10px 16px; margin: 12px 0; font-size: 14px; font-weight: 700; color: #1d4ed8;">
+        🔗 https://subap209.github.io/quocphong/
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 10px; margin: 14px 0;">
+        <span style="background:#fefce8; color:#854d0e; border:1px solid #fef08a; padding:6px 12px; border-radius:20px; font-size:12.5px; font-weight:700;">🔑 Mật khẩu: vietnam</span>
+        <span style="background:#fef2f2; color:#991b1b; border:1px solid #fecaca; padding:6px 12px; border-radius:20px; font-size:12.5px; font-weight:700;">⏱️ 5 Phút (10 câu)</span>
+      </div>
+
+      <p style="font-size: 13px; color: #64748b; margin-top: 8px;">Học sinh mở camera hoặc Zalo trên điện thoại quét mã để vào chọn nhóm làm bài.</p>
+
+      <div class="modal-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="window.closeClassQRModal()">Đóng Cửa Sổ</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- MODAL: CẤU HÌNH KẾT NỐI GOOGLE SHEET THỜI GIAN THỰC -->
+  <div class="modal-backdrop" id="googleSheetConfigModal">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-header-icon" style="background:#059669;">
+          GS
+        </div>
+        <div>
+          <h3 style="font-size: 20px; color: #0b3c60;">Kết Nối Google Sheet Thời Gian Thực</h3>
+          <p>Tự động nhận bài nộp của học sinh từ điện thoại lên máy tính giáo viên</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="inputGoogleScriptUrl">URL Web App của Google Apps Script (kết thúc bằng /exec):</label>
+        <input type="text" id="inputGoogleScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec" autocomplete="off">
+        <div style="font-size:12px; color:#64748b; margin-top:4px;">
+          * Lấy từ menu: Google Sheet &rarr; Tiện ích mở rộng &rarr; Apps Script &rarr; Triển khai &rarr; Triển khai mới &rarr; Ứng dụng web.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="inputGoogleSheetDocUrl">Đường dẫn Google Sheet trực tiếp (tùy chọn, để mở nhanh):</label>
+        <input type="text" id="inputGoogleSheetDocUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit" autocomplete="off">
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; font-size:12.5px; line-height:1.6; color:#334155; margin-bottom:16px;">
+        <strong>📌 Hướng dẫn nhanh trong 3 bước:</strong><br>
+        1. Tạo Google Sheet mới &rarr; vào <strong>Tiện ích mở rộng &rarr; Apps Script</strong> &rarr; dán mã từ tệp <code>Code.gs</code>.<br>
+        2. Nhấn <strong>Triển khai &rarr; Triển khai mới &rarr; Chọn Ứng dụng web</strong> (Quyền: <em>Bất kỳ ai</em>).<br>
+        3. Sao chép liên kết Web App dán vào ô trên và nhấn <strong>Lưu & Kiểm Tra Kết Nối</strong>.
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <button id="btnOpenGoogleSheetTab" class="btn btn-secondary" onclick="window.openGoogleSheetTab()" style="display:none;">
+            📂 Mở Google Sheet Trực Tuyến
+          </button>
+        </div>
+        <div class="modal-actions" style="margin-top:0;">
+          <button class="btn btn-secondary" onclick="window.closeGoogleSheetConfigModal()">Đóng</button>
+          <button class="btn btn-primary" onclick="window.saveAndTestGoogleSheetConfig()">Lưu & Kết Nối</button>
+        </div>
+      </div>
+    </div>
+  </div>
+    
   <!-- TOAST MESSAGE -->
   <div class="toast-msg" id="toastBox">Thông báo</div>
 
@@ -1624,6 +1769,8 @@
             renderTeacherDashboard();
           } else if (currentView === 'studentHomeView') {
             renderStudentHome();
+      initGoogleSheetUI();
+      if (googleScriptUrl) fetchFromGoogleSheet();
           }
           showToast('⚡ Kết quả nhóm vừa được cập nhật theo thời gian thực!');
         }
@@ -1646,6 +1793,292 @@
     let currentView = 'studentHomeView';
     let isTeacherLoggedIn = false; window.isTeacherLoggedIn = false;
 
+    
+    // ==========================================
+    // CẤU HÌNH & ĐỒNG BỘ GOOGLE SHEET THỜI GIAN THỰC
+    // ==========================================
+    const GOOGLE_SCRIPT_STORAGE_KEY = 'gdqp_google_sheet_api_url_v1';
+    const GOOGLE_SHEET_DOC_STORAGE_KEY = 'gdqp_google_sheet_doc_url_v1';
+    const CLASS_NAME_STORAGE_KEY = 'gdqp_current_class_name_v1';
+
+    let googleScriptUrl = localStorage.getItem(GOOGLE_SCRIPT_STORAGE_KEY) || '';
+    let googleSheetDocUrl = localStorage.getItem(GOOGLE_SHEET_DOC_STORAGE_KEY) || '';
+    let currentClassName = localStorage.getItem(CLASS_NAME_STORAGE_KEY) || '11A1';
+    let isFetchingFromSheet = false;
+    let sheetSyncTimer = null;
+
+    function initGoogleSheetUI() {
+      const classInput = document.getElementById('inputCurrentClass');
+      if (classInput) classInput.value = currentClassName;
+      updateSheetBadgeStatus();
+
+      const btnOpen = document.getElementById('btnOpenGoogleSheetTab');
+      if (btnOpen) {
+        btnOpen.style.display = googleSheetDocUrl ? 'inline-block' : 'none';
+      }
+    }
+
+    function onClassChange(newClass) {
+      currentClassName = (newClass || '11A1').trim();
+      localStorage.setItem(CLASS_NAME_STORAGE_KEY, currentClassName);
+      showToast('Đã đổi lớp học sang: ' + currentClassName);
+      if (googleScriptUrl) {
+        fetchFromGoogleSheet();
+      }
+    }
+
+    function updateSheetBadgeStatus() {
+      const badge = document.getElementById('sheetStatusBadge');
+      if (!badge) return;
+      if (googleScriptUrl) {
+        badge.innerHTML = '🟢 Google Sheet: Đã kết nối';
+        badge.style.background = '#ecfdf5';
+        badge.style.color = '#047857';
+        badge.style.borderColor = '#a7f3d0';
+      } else {
+        badge.innerHTML = '⚪ Google Sheet: Chưa kết nối';
+        badge.style.background = '#f1f5f9';
+        badge.style.color = '#475569';
+        badge.style.borderColor = '#cbd5e1';
+      }
+    }
+
+    function openGoogleSheetConfigModal() {
+      document.getElementById('inputGoogleScriptUrl').value = googleScriptUrl;
+      document.getElementById('inputGoogleSheetDocUrl').value = googleSheetDocUrl;
+      const btnOpen = document.getElementById('btnOpenGoogleSheetTab');
+      if (btnOpen) {
+        btnOpen.style.display = googleSheetDocUrl ? 'inline-block' : 'none';
+      }
+      document.getElementById('googleSheetConfigModal').classList.add('open');
+    }
+
+    function closeGoogleSheetConfigModal() {
+      document.getElementById('googleSheetConfigModal').classList.remove('open');
+    }
+
+    function openGoogleSheetTab() {
+      if (googleSheetDocUrl) {
+        window.open(googleSheetDocUrl, '_blank');
+      } else {
+        alert('Chưa có liên kết trang tính Google Sheet.');
+      }
+    }
+
+    function saveAndTestGoogleSheetConfig() {
+      const urlInput = document.getElementById('inputGoogleScriptUrl').value.trim();
+      const docInput = document.getElementById('inputGoogleSheetDocUrl').value.trim();
+
+      googleScriptUrl = urlInput;
+      googleSheetDocUrl = docInput;
+
+      localStorage.setItem(GOOGLE_SCRIPT_STORAGE_KEY, googleScriptUrl);
+      localStorage.setItem(GOOGLE_SHEET_DOC_STORAGE_KEY, googleSheetDocUrl);
+
+      updateSheetBadgeStatus();
+      closeGoogleSheetConfigModal();
+
+      if (googleScriptUrl) {
+        showToast('Đang kết nối thử nghiệm đến Google Sheet...');
+        fetchFromGoogleSheet(true);
+      } else {
+        showToast('Đã lưu cài đặt (hoạt động ở chế độ ngoại tuyến).');
+      }
+    }
+
+    // ĐỒNG BỘ TỰ ĐỘNG TỪ GOOGLE SHEET (POLLING REAL-TIME)
+    function fetchFromGoogleSheet(isManual = false) {
+      if (!googleScriptUrl || isFetchingFromSheet) return;
+      isFetchingFromSheet = true;
+
+      const requestUrl = googleScriptUrl + (googleScriptUrl.includes('?') ? '&' : '?') +
+        'action=get_results&className=' + encodeURIComponent(currentClassName) +
+        '&t=' + Date.now();
+
+      fetch(requestUrl)
+        .then(response => response.json())
+        .then(data => {
+          isFetchingFromSheet = false;
+          if (data && data.status === 'success' && data.groups) {
+            let hasNewData = false;
+            GROUP_CONFIGS.forEach(g => {
+              const remoteG = data.groups[g.id];
+              if (remoteG) {
+                const localG = appState.groups[g.id] || {};
+                // Cập nhật nếu trạng thái hoặc điểm thay đổi
+                if (remoteG.status !== localG.status || remoteG.score !== localG.score) {
+                  hasNewData = true;
+                }
+                appState.groups[g.id] = {
+                  ...localG,
+                  ...remoteG
+                };
+              }
+              if (data.teacherComments && data.teacherComments[g.id] !== undefined) {
+                appState.teacherComments[g.id] = data.teacherComments[g.id];
+              }
+            });
+
+            saveStateToStorage();
+            if (currentView === 'teacherDashboardView') {
+              renderTeacherDashboard(false);
+            } else if (currentView === 'studentHomeView') {
+              renderStudentHome();
+      initGoogleSheetUI();
+      if (googleScriptUrl) fetchFromGoogleSheet();
+            }
+
+            if (isManual) {
+              showToast('✅ Kết nối Google Sheet thành công!');
+            } else if (hasNewData) {
+              showToast('⚡ Cập nhật bài nộp mới từ Google Sheet!');
+            }
+          }
+        })
+        .catch(err => {
+          isFetchingFromSheet = false;
+          console.warn('Lỗi đồng bộ Google Sheet:', err);
+          if (isManual) {
+            showToast('⚠️ Không thể kết nối đến URL Web App. Vui lòng kiểm tra lại quyền truy cập (Chọn Anyone).');
+          }
+        });
+    }
+
+    // GỬI BÀI THI LÊN GOOGLE SHEET
+    function pushSubmissionToGoogleSheet(groupId, groupState) {
+      if (!googleScriptUrl) return;
+
+      const groupCfg = GROUP_CONFIGS.find(g => g.id === groupId) || { name: 'Nhóm ' + groupId };
+      const payload = {
+        action: 'submit',
+        groupId: groupId,
+        groupName: groupCfg.name,
+        className: currentClassName,
+        score: groupState.score,
+        correctCount: groupState.correctCount,
+        wrongCount: groupState.wrongCount,
+        timeSpent: document.getElementById('resultTimeUsed') ? document.getElementById('resultTimeUsed').innerText : '--',
+        leader: groupState.leader || '',
+        answers: groupState.answers || {},
+        comment: appState.teacherComments[groupId] || ''
+      };
+
+      // Gửi ngầm qua POST (JSON)
+      fetch(googleScriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        console.log('Đã gửi bài nhóm ' + groupId + ' lên Google Sheet');
+      }).catch(err => {
+        // Fallback gửi qua GET nếu POST bị hạn chế
+        const getUrl = googleScriptUrl + (googleScriptUrl.includes('?') ? '&' : '?') +
+          'action=submit&groupId=' + groupId +
+          '&groupName=' + encodeURIComponent(groupCfg.name) +
+          '&className=' + encodeURIComponent(currentClassName) +
+          '&score=' + groupState.score +
+          '&correctCount=' + groupState.correctCount +
+          '&wrongCount=' + groupState.wrongCount +
+          '&leader=' + encodeURIComponent(groupState.leader || '') +
+          '&t=' + Date.now();
+        fetch(getUrl, { mode: 'no-cors' });
+      });
+    }
+
+    // XUẤT KẾT QUẢ RA FILE EXCEL (CSV UTF-8 BOM TƯƠNG THÍCH HOÀN HẢO VỚI MICROSOFT EXCEL)
+    function exportResultsToExcel() {
+      const className = currentClassName || '11A1';
+      let csvContent = '\uFEFF'; // Ký tự UTF-8 BOM giúp Excel hiển thị tiếng Việt có dấu chuẩn 100%
+
+      // Tiêu đề báo cáo
+      csvContent += 'TRƯỜNG THPT QUANG TRUNG - BỘ MÔN GIÁO DỤC QUỐC PHÒNG VÀ AN NINH\r\n';
+      csvContent += 'BẢNG ĐIỂM HOẠT ĐỘNG NHÓM - CHUYÊN ĐỀ PHÒNG CHỐNG TỘI PHẠM CÔNG NGHỆ CAO\r\n';
+      csvContent += `Lớp học: ${className} | Thời điểm xuất: ${new Date().toLocaleString('vi-VN')}\r\n\r\n`;
+
+      // Hàng tiêu đề cột
+      csvContent += 'Mã Nhóm,Tên Nhóm,Đại Diện / Thành Viên,Trạng Thái,Điểm Số (/10),Số Câu Đúng,Số Câu Sai,Thời Gian Nộp,Chi Tiết Đáp Án (1-10),Nhận Xét Của Giáo Viên\r\n';
+
+      // Các hàng dữ liệu của 8 nhóm
+      GROUP_CONFIGS.forEach(g => {
+        const st = appState.groups[g.id] || {};
+        const isSub = st.status === 'submitted';
+        const score = isSub ? st.score : '';
+        const corr = isSub ? st.correctCount : '';
+        const wrong = isSub ? st.wrongCount : '';
+        const time = isSub ? (st.submittedAt || '') : '';
+        const leader = (st.leader || '').replace(/"/g, '""');
+        const status = isSub ? 'Đã nộp bài' : (st.status === 'in_progress' ? 'Đang làm bài' : 'Chưa làm');
+        const comment = (appState.teacherComments[g.id] || '').replace(/"/g, '""');
+
+        let details = '';
+        if (isSub && st.answers) {
+          details = QUESTIONS_DATA.map(q => {
+            const userA = st.answers[q.id];
+            return `C${q.id}:${userA || '-'}${userA === q.answer ? 'Đ' : 'S'}`;
+          }).join('; ');
+        }
+        details = details.replace(/"/g, '""');
+
+        csvContent += `"${g.id}","${g.name}","${leader}","${status}","${score}","${corr}","${wrong}","${time}","${details}","${comment}"\r\n`;
+      });
+
+      // Tạo Blob và tải xuống máy tính
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const filename = `Bang_Diem_GDQP_Lop_${className}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('📥 Đã tải xuống file bảng điểm: ' + filename);
+    }
+
+    // XÓA KẾT QUẢ ĐỂ KIỂM TRA LỚP MỚI
+    function resetForNewClassPrompt() {
+      const nextClassDefault = '11A' + (parseInt(currentClassName.replace(/[^0-9]/g, '') || '1') + 1);
+      const newClassInput = prompt(
+        `BẮT ĐẦU KIỂM TRA LỚP MỚI:\n` +
+        `- Kết quả lớp hiện tại (${currentClassName}) sẽ được lưu trữ vào Lịch Sử trên Google Sheet.\n` +
+        `- 8 nhóm học sinh sẽ được đặt lại về 0 điểm sẵn sàng cho lớp mới.\n\n` +
+        `Nhập tên lớp học mới cần kiểm tra:`,
+        nextClassDefault
+      );
+
+      if (newClassInput !== null) {
+        const targetClass = newClassInput.trim() || nextClassDefault;
+        currentClassName = targetClass;
+        localStorage.setItem(CLASS_NAME_STORAGE_KEY, currentClassName);
+
+        const classInput = document.getElementById('inputCurrentClass');
+        if (classInput) classInput.value = currentClassName;
+
+        // Xóa dữ liệu cục bộ
+        appState = { groups: {}, teacherComments: {} };
+        initDefaultState();
+        saveStateToStorage();
+        renderTeacherDashboard();
+
+        // Gửi lệnh xóa và chuyển lớp lên Google Sheet
+        if (googleScriptUrl) {
+          showToast(`Đang lưu trữ dữ liệu lớp cũ và khởi tạo lớp ${targetClass} trên Google Sheet...`);
+          fetch(googleScriptUrl + (googleScriptUrl.includes('?') ? '&' : '?') +
+            'action=reset_all&className=' + encodeURIComponent(targetClass) +
+            '&t=' + Date.now()
+          ).then(r => r.json()).then(res => {
+            showToast(`✅ Đã thiết lập kiểm tra thành công cho lớp: ${targetClass}`);
+          }).catch(e => {
+            showToast(`Đã làm mới dữ liệu cho lớp: ${targetClass}`);
+          });
+        } else {
+          showToast(`✅ Đã thiết lập kiểm tra thành công cho lớp: ${targetClass}`);
+        }
+      }
+    }
+    
     // Khởi tạo trạng thái mặc định
     function initDefaultState() {
       GROUP_CONFIGS.forEach(g => {
@@ -1703,6 +2136,8 @@
           renderTeacherDashboard();
         } else if (currentView === 'studentHomeView') {
           renderStudentHome();
+      initGoogleSheetUI();
+      if (googleScriptUrl) fetchFromGoogleSheet();
         }
       }
     });
@@ -1712,8 +2147,11 @@
       if (currentView === 'teacherDashboardView') {
         loadStateFromStorage();
         renderTeacherDashboard(false);
+        if (googleScriptUrl) {
+          fetchFromGoogleSheet();
+        }
       }
-    }, 1500);
+    }, 2500);
 
     // Chuyển view
     function showView(viewId) {
@@ -2006,6 +2444,8 @@
         }
         showView('studentHomeView');
         renderStudentHome();
+      initGoogleSheetUI();
+      if (googleScriptUrl) fetchFromGoogleSheet();
       }
     }
 
@@ -2055,6 +2495,7 @@
 
       showView('quizResultView');
       showToast(`🎉 ${groupCfg.name} đã hoàn thành bài thi với ${score}/10 điểm!`);
+      pushSubmissionToGoogleSheet(selectedGroupId, gState);
     }
 
     function openReviewAnswersModal() {
@@ -2099,6 +2540,8 @@
       isTeacherLoggedIn = false; window.isTeacherLoggedIn = false;
       showView('studentHomeView');
       renderStudentHome();
+      initGoogleSheetUI();
+      if (googleScriptUrl) fetchFromGoogleSheet();
       showToast('Đã đăng xuất khỏi tài khoản Giáo Viên.');
     }
 
@@ -2486,6 +2929,8 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadStateFromStorage();
       renderStudentHome();
+      initGoogleSheetUI();
+      if (googleScriptUrl) fetchFromGoogleSheet();
 
       // Hỗ trợ phím Enter trong ô mật khẩu
       const studentInput = document.getElementById('studentPasswordInput');
